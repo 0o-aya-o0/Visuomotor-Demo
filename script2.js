@@ -71,9 +71,22 @@ function draw() {
 
     // Draw cursor paths if max clicks reached
     if (clickCount >= maxClicks) {
+        // Draw final target
+        ctx.beginPath();
+        ctx.arc(TargetX[showUpperTarget ? 1 : 0], TargetY[showUpperTarget ? 1 : 0], TargetRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = 'blue';
+        ctx.fill();
+
+        // Draw second target
+        ctx.beginPath();
+        ctx.arc(TargetX[showUpperTarget ? 0 : 1], TargetY[showUpperTarget ? 0 : 1], TargetRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = 'blue';
+        ctx.fill();
+
         for (let i = 1; i < cursorPaths.length; i += 2) { // Start from index 1 to get even clicks
             const path = cursorPaths[i];
 
+            // Draw path
             ctx.beginPath();
             for (let j = 0; j < path.length; j++) {
                 const x = path[j].x;
@@ -90,11 +103,13 @@ function draw() {
         }
     }
 
-    // Draw final target
-    ctx.beginPath();
-    ctx.arc(TargetX[showUpperTarget ? 1 : 0], TargetY[showUpperTarget ? 1 : 0], TargetRadius, 0, 2 * Math.PI);
-    ctx.fillStyle = 'blue';
-    ctx.fill();
+    if (clickCount < maxClicks) {
+        // Draw target
+        ctx.beginPath();
+        ctx.arc(currentTarget.x, currentTarget.y, TargetRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = 'blue';
+        ctx.fill();
+    }
 
     // Draw cursor
     ctx.beginPath();
@@ -104,7 +119,6 @@ function draw() {
 
     ctx.restore();
 }
-
 
 // Initial draw
 draw();
