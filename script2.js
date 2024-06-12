@@ -166,6 +166,12 @@ function draw() {
     }
 
     ctx.restore();
+
+    // Draw the title with current trial count
+    ctx.font = '20px Arial';
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'center';
+    ctx.fillText(`visuomotor adaptation (${trialCount}/${maxTrials} trials)`, canvas.width / 2, 30);
 }
 
 // Initial draw
