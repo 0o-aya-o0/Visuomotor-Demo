@@ -14,7 +14,7 @@ const maxClicks = 20;
 let cursorPaths = []; // Array to store cursor paths
 let cursorPath = []; // Array to store current cursor path
 let tracking = false;
-let showUpperTarget = false;
+let showGoalTarget = false;
 let cursorVisible = false;
 
 canvas.addEventListener('mousemove', moveCursor);
@@ -62,9 +62,9 @@ function handleClick(event) {
             // Save cursor path and clear current path
             cursorPaths.push([...cursorPath]);
             cursorPath = [];
-            
-            // Toggle showUpperTarget
-            showUpperTarget = !showUpperTarget;
+
+            // Toggle showGoalTarget
+            showGoalTarget = !showGoalTarget;
         }
 
         if (clickCount === 1) {
@@ -86,13 +86,13 @@ function draw() {
     if (clickCount >= maxClicks) {
         // Draw final target
         ctx.beginPath();
-        ctx.arc(TargetX[showUpperTarget ? 1 : 0], TargetY[showUpperTarget ? 1 : 0], TargetRadius, 0, 2 * Math.PI);
+        ctx.arc(TargetX[showGoalTarget ? 1 : 0], TargetY[showGoalTarget ? 1 : 0], TargetRadius, 0, 2 * Math.PI);
         ctx.fillStyle = 'green';
         ctx.fill();
 
         // Draw second target
         ctx.beginPath();
-        ctx.arc(TargetX[showUpperTarget ? 0 : 1], TargetY[showUpperTarget ? 0 : 1], TargetRadius, 0, 2 * Math.PI);
+        ctx.arc(TargetX[showGoalTarget ? 0 : 1], TargetY[showGoalTarget ? 0 : 1], TargetRadius, 0, 2 * Math.PI);
         ctx.fillStyle = 'green';
         ctx.fill();
 
@@ -111,7 +111,7 @@ function draw() {
                 }
             }
             ctx.strokeStyle = 'green';
-            ctx.lineWidth = 0.01;
+            ctx.lineWidth = 0.005;
             ctx.stroke();
         }
     }
