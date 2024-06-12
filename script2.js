@@ -87,13 +87,13 @@ function draw() {
         // Draw final target
         ctx.beginPath();
         ctx.arc(TargetX[showUpperTarget ? 1 : 0], TargetY[showUpperTarget ? 1 : 0], TargetRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = 'blue';
+        ctx.fillStyle = 'green';
         ctx.fill();
 
         // Draw second target
         ctx.beginPath();
         ctx.arc(TargetX[showUpperTarget ? 0 : 1], TargetY[showUpperTarget ? 0 : 1], TargetRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = 'blue';
+        ctx.fillStyle = 'green';
         ctx.fill();
 
         for (let i = 1; i < cursorPaths.length; i += 2) { // Start from index 1 to get even clicks
@@ -120,7 +120,7 @@ function draw() {
         // Draw target
         ctx.beginPath();
         ctx.arc(currentTarget.x, currentTarget.y, TargetRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = 'blue';
+        ctx.fillStyle = 'green';
         ctx.fill();
     }
 
@@ -128,7 +128,7 @@ function draw() {
     if (cursorVisible) {
         ctx.beginPath();
         ctx.arc(cursor.x, cursor.y, CursorSize / canvas.width, 0, 2 * Math.PI);
-        ctx.fillStyle = 'red';
+        ctx.fillStyle = 'blue';
         ctx.fill();
     }
 
