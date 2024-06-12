@@ -15,9 +15,22 @@ let cursorPaths = []; // Array to store cursor paths
 let cursorPath = []; // Array to store current cursor path
 let tracking = false;
 let showUpperTarget = false;
+let cursorVisible = false;
 
 canvas.addEventListener('mousemove', moveCursor);
 canvas.addEventListener('click', handleClick);
+
+// Add these event listeners for cursor visibility
+canvas.addEventListener('mouseenter', () => {
+    cursorVisible = true;
+    canvas.style.cursor = 'none';
+    draw();
+});
+canvas.addEventListener('mouseleave', () => {
+    cursorVisible = false;
+    canvas.style.cursor = 'default';
+    draw();
+});
 
 function moveCursor(event) {
     const rect = canvas.getBoundingClientRect();
@@ -111,11 +124,13 @@ function draw() {
         ctx.fill();
     }
 
-    // Draw cursor
-    ctx.beginPath();
-    ctx.arc(cursor.x, cursor.y, CursorSize / canvas.width, 0, 2 * Math.PI);
-    ctx.fillStyle = 'red';
-    ctx.fill();
+    // Draw cursor if visible
+    if (cursorVisible) {
+        ctx.beginPath();
+        ctx.arc(cursor.x, cursor.y, CursorSize / canvas.width, 0, 2 * Math.PI);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+    }
 
     ctx.restore();
 }
