@@ -5,6 +5,7 @@ const TargetX = [0, 0]; // Target X positions
 const TargetY = [0, 0.8]; // Target Y positions
 const TargetRadius = 0.05; // Target radius as a fraction of the canvas size
 const CursorSize = 10;
+const rotationAngle = -30 * (Math.PI / 180); // 30 degrees counterclockwise in radians
 
 let cursor = { x: 0, y: 0 };
 let currentTargetIndex = 0;
@@ -39,10 +40,13 @@ function moveCursor(event) {
     const hx = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
     const hy = ((event.clientY - rect.top) / canvas.height) * -2 + 1;
 
-    cursor = { x: hx, y: hy };
+    // Rotate the cursor position
+    const rotatedCursor = rotatePoint(hx, hy, rotationAngle);
+
+    cursor = { x: rotatedCursor.x, y: rotatedCursor.y };
 
     if (tracking) {
-        cursorPath.push({ x: hx, y: hy }); // Store cursor position
+        cursorPath.push({ x: rotatedCursor.x, y: rotatedCursor.y }); // Store cursor position
     }
 
     draw();
@@ -54,8 +58,11 @@ function handleClick(event) {
         const hx = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
         const hy = ((event.clientY - rect.top) / canvas.height) * -2 + 1;
 
+        // Rotate the click position
+        const rotatedClick = rotatePoint(hx, hy, rotationAngle);
+
         // Check if the click is within the current target
-        const distance = Math.sqrt((hx - currentTarget.x) ** 2 + (hy - currentTarget.y) ** 2);
+        const distance = Math.sqrt((rotatedClick.x - currentTarget.x) ** 2 + (rotatedClick.y - currentTarget.y) ** 2);
         if (distance < TargetRadius) {
             clickCount++;
             currentTargetIndex = (currentTargetIndex + 1) % TargetX.length;
@@ -81,6 +88,15 @@ function handleClick(event) {
         }
     }
     draw();
+}
+
+function rotatePoint(x, y, angle) {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return {
+        x: x * cos - y * sin,
+        y: x * sin + y * cos
+    };
 }
 
 function draw() {
