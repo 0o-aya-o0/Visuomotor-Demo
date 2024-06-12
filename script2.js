@@ -11,10 +11,12 @@ let currentTargetIndex = 0;
 let currentTarget = { x: TargetX[currentTargetIndex], y: TargetY[currentTargetIndex] };
 let clickCount = 0;
 const maxClicks = 20;
+let trialCount = 0;
+const maxTrials = 10;
 let cursorPaths = []; // Array to store cursor paths
 let cursorPath = []; // Array to store current cursor path
 let tracking = false;
-let showGoalTarget = false;
+let showUpperTarget = false;
 let cursorVisible = false;
 
 canvas.addEventListener('mousemove', moveCursor);
@@ -47,7 +49,7 @@ function moveCursor(event) {
 }
 
 function handleClick(event) {
-    if (clickCount < maxClicks) {
+    if (trialCount < maxTrials) {
         const rect = canvas.getBoundingClientRect();
         const hx = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
         const hy = ((event.clientY - rect.top) / canvas.height) * -2 + 1;
@@ -62,14 +64,19 @@ function handleClick(event) {
             // Save cursor path and clear current path
             cursorPaths.push([...cursorPath]);
             cursorPath = [];
+            
+            // Toggle showUpperTarget
+            showUpperTarget = !showUpperTarget;
 
-            // Toggle showGoalTarget
-            showGoalTarget = !showGoalTarget;
+            // Increment trial count
+            if (clickCount % 2 === 0) {
+                trialCount++;
+            }
         }
 
         if (clickCount === 1) {
             tracking = true;
-        } else if (clickCount >= maxClicks) {
+        } else if (trialCount >= maxTrials) {
             tracking = false;
         }
     }
@@ -82,17 +89,17 @@ function draw() {
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.scale(canvas.width / 2, -canvas.height / 2);
 
-    // Draw cursor paths if max clicks reached
-    if (clickCount >= maxClicks) {
+    // Draw cursor paths if max trials reached
+    if (trialCount >= maxTrials) {
         // Draw final target
         ctx.beginPath();
-        ctx.arc(TargetX[showGoalTarget ? 1 : 0], TargetY[showGoalTarget ? 1 : 0], TargetRadius, 0, 2 * Math.PI);
+        ctx.arc(TargetX[showUpperTarget ? 1 : 0], TargetY[showUpperTarget ? 1 : 0], TargetRadius, 0, 2 * Math.PI);
         ctx.fillStyle = 'green';
         ctx.fill();
 
         // Draw second target
         ctx.beginPath();
-        ctx.arc(TargetX[showGoalTarget ? 0 : 1], TargetY[showGoalTarget ? 0 : 1], TargetRadius, 0, 2 * Math.PI);
+        ctx.arc(TargetX[showUpperTarget ? 0 : 1], TargetY[showUpperTarget ? 0 : 1], TargetRadius, 0, 2 * Math.PI);
         ctx.fillStyle = 'green';
         ctx.fill();
 
@@ -116,7 +123,7 @@ function draw() {
         }
     }
 
-    if (clickCount < maxClicks) {
+    if (trialCount < maxTrials) {
         // Draw target
         ctx.beginPath();
         ctx.arc(currentTarget.x, currentTarget.y, TargetRadius, 0, 2 * Math.PI);
