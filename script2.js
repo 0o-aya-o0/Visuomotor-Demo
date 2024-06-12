@@ -16,9 +16,10 @@ const maxTrials = 30; // Total trials: 10 no rotation, 10 with 30 degree rotatio
 let cursorPaths = []; // Array to store cursor paths
 let cursorPath = []; // Array to store current cursor path
 let tracking = false;
-let showUpperTarget = false;
+let showGoalTarget = false;
 let cursorVisible = false;
-let baseCursor = { x: 0, y: 0 }; // To store the base cursor position
+let baseCursor = { x: 0, y: 0 }; // To store the base cursor position for rotation trials
+let pathsDrawn = false; // To check if paths are drawn
 
 canvas.addEventListener('mousemove', moveCursor);
 canvas.addEventListener('click', handleClick);
@@ -55,41 +56,49 @@ function handleClick(event) {
         const hx = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
         const hy = ((event.clientY - rect.top) / canvas.height) * -2 + 1;
 
-        let rotatedClick = { x: hx, y: hy };
-        if (trialCount >= 10 && trialCount < 20) {
-            rotatedClick = rotatePoint(hx - baseCursor.x, hy - baseCursor.y, rotationAngle);
-            rotatedClick.x += baseCursor.x;
-            rotatedClick.y += baseCursor.y;
+        let adjustedClick = { x: hx, y: hy };
+        if (trialCount >= 11 && trialCount < 21) { // Apply rotation for trials 11-20
+            adjustedClick = rotatePoint(hx - baseCursor.x, hy - baseCursor.y, rotationAngle);
+            adjustedClick.x += baseCursor.x;
+            adjustedClick.y += baseCursor.y;
         }
 
         // Check if the click is within the current target
-        const distance = Math.sqrt((rotatedClick.x - currentTarget.x) ** 2 + (rotatedClick.y - currentTarget.y) ** 2);
+        const distance = Math.sqrt((adjustedClick.x - currentTarget.x) ** 2 + (adjustedClick.y - currentTarget.y) ** 2);
         if (distance < TargetRadius) {
             clickCount++;
             currentTargetIndex = (currentTargetIndex + 1) % TargetX.length;
             currentTarget = { x: TargetX[currentTargetIndex], y: TargetY[currentTargetIndex] };
 
             // Save cursor path and clear current path
-            cursorPaths.push([...cursorPath]);
-            cursorPath = [];
-            
-            // Toggle showUpperTarget
-            showUpperTarget = !showUpperTarget;
+            if (clickCount % 2 === 0) {
+                cursorPaths.push({ path: [...cursorPath], trial: trialCount });
+                cursorPath = [];
+                if (trialCount === 9 || trialCount === 19) {
+                    cursor = { ...cursorPaths[cursorPaths.length - 1].path.slice(-1)[0] }; // Update cursor position to the end of the path
+                }
+            } else {
+                cursorPath = []; // Clear path on the upward movement
+            }
+
+            // Toggle showGoalTarget
+            showGoalTarget = !showGoalTarget;
 
             // Increment trial count
             if (clickCount % 2 === 0) {
                 trialCount++;
                 if (trialCount === 10 || trialCount === 20) {
-                    baseCursor = { ...cursor }; // Update base cursor position
+                    baseCursor = { ...cursor }; // Update base cursor position for rotation trials
                 }
             }
         }
 
         if (clickCount === 1) {
             tracking = true;
-        } else if (trialCount >= maxTrials) {
-            tracking = false;
         }
+    }
+    if (trialCount >= maxTrials && !pathsDrawn) {
+        pathsDrawn = true;
     }
     draw();
 }
@@ -109,58 +118,34 @@ function draw() {
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.scale(canvas.width / 2, -canvas.height / 2);
 
-    // Draw cursor paths if max trials reached
-    if (trialCount >= maxTrials) {
-        // Draw final target
-        ctx.beginPath();
-        ctx.arc(TargetX[showUpperTarget ? 1 : 0], TargetY[showUpperTarget ? 1 : 0], TargetRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = 'green';
-        ctx.fill();
-
-        // Draw second target
-        ctx.beginPath();
-        ctx.arc(TargetX[showUpperTarget ? 0 : 1], TargetY[showUpperTarget ? 0 : 1], TargetRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = 'green';
-        ctx.fill();
-
-        for (let i = 1; i < cursorPaths.length; i += 2) { // Start from index 1 to get even clicks
-            const path = cursorPaths[i];
-
-            // Draw path
+    if (trialCount < maxTrials || pathsDrawn) {
+        // Draw the current target if not all trials are complete
+        if (trialCount < maxTrials) {
             ctx.beginPath();
-            for (let j = 0; j < path.length; j++) {
-                const x = path[j].x;
-                const y = path[j].y;
-                if (j === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
+            ctx.arc(currentTarget.x, currentTarget.y, TargetRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = 'green';
+            ctx.fill();
+        } else {
+            // Draw both targets after all trials
+            for (let i = 0; i < TargetX.length; i++) {
+                ctx.beginPath();
+                ctx.arc(TargetX[i], TargetY[i], TargetRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = 'green';
+                ctx.fill();
             }
-            ctx.strokeStyle = 'green';
-            ctx.lineWidth = 0.005;
-            ctx.stroke();
         }
-    }
-
-    if (trialCount < maxTrials) {
-        // Draw target
-        ctx.beginPath();
-        ctx.arc(currentTarget.x, currentTarget.y, TargetRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = 'green';
-        ctx.fill();
     }
 
     // Draw cursor if visible
-    if (cursorVisible) {
-        let rotatedCursor = cursor;
-        if (trialCount >= 10 && trialCount < 20) {
-            rotatedCursor = rotatePoint(cursor.x - baseCursor.x, cursor.y - baseCursor.y, rotationAngle);
-            rotatedCursor.x += baseCursor.x;
-            rotatedCursor.y += baseCursor.y;
+    if (cursorVisible && trialCount < maxTrials) {
+        let displayCursor = cursor;
+        if (trialCount >= 11 && trialCount < 21) { // Apply rotation for trials 11-20
+            displayCursor = rotatePoint(cursor.x - baseCursor.x, cursor.y - baseCursor.y, rotationAngle);
+            displayCursor.x += baseCursor.x;
+            displayCursor.y += baseCursor.y;
         }
         ctx.beginPath();
-        ctx.arc(rotatedCursor.x, rotatedCursor.y, CursorSize / canvas.width, 0, 2 * Math.PI);
+        ctx.arc(displayCursor.x, displayCursor.y, CursorSize / canvas.width, 0, 2 * Math.PI);
         ctx.fillStyle = 'blue';
         ctx.fill();
     }
@@ -172,7 +157,84 @@ function draw() {
     ctx.fillStyle = 'black';
     ctx.textAlign = 'center';
     ctx.fillText(`visuomotor adaptation (${trialCount}/${maxTrials} trials)`, canvas.width / 2, 30);
+
+    // Draw paths if all trials are complete
+    if (pathsDrawn) {
+        drawPaths();
+        drawFinalCursorAndTitle();
+    }
+}
+
+function drawPaths() {
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(canvas.width / 2, -canvas.height / 2);
+
+    // Draw all paths
+    for (let i = 0; i < cursorPaths.length; i++) {
+        let path = cursorPaths[i].path;
+        if (cursorPaths[i].trial >= 11 && cursorPaths[i].trial < 21) { // Apply rotation for trials 11-20
+            path = path.map(point => {
+                const rotatedPoint = rotatePoint(point.x - baseCursor.x, point.y - baseCursor.y, rotationAngle);
+                return {
+                    x: rotatedPoint.x + baseCursor.x,
+                    y: rotatedPoint.y + baseCursor.y
+                };
+            });
+        }
+        // Draw path
+        ctx.beginPath();
+        for (let j = 0; j < path.length; j++) {
+            const x = path[j].x;
+            const y = path[j].y;
+            if (j === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.strokeStyle = 'green';
+        ctx.lineWidth = 0.005;
+        ctx.stroke();
+    }
+
+    ctx.restore();
+}
+
+function drawFinalCursorAndTitle() {
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(canvas.width / 2, -canvas.height / 2);
+
+    // Draw the final cursor
+    let displayCursor = cursor;
+    if (trialCount >= 11 && trialCount < 21) { // Apply rotation for trials 11-20
+        displayCursor = rotatePoint(cursor.x - baseCursor.x, cursor.y - baseCursor.y, rotationAngle);
+        displayCursor.x += baseCursor.x;
+        displayCursor.y += baseCursor.y;
+    }
+    ctx.beginPath();
+    ctx.arc(displayCursor.x, displayCursor.y, CursorSize / canvas.width, 0, 2 * Math.PI);
+    ctx.fillStyle = 'blue';
+    ctx.fill();
+
+    // Draw both targets
+    for (let i = 0; i < TargetX.length; i++) {
+        ctx.beginPath();
+        ctx.arc(TargetX[i], TargetY[i], TargetRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = 'green';
+        ctx.fill();
+    }
+
+    ctx.restore();
+
+    // Draw the final title
+    ctx.font = '20px Arial';
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'center';
+    ctx.fillText(`visuomotor adaptation (${trialCount}/${maxTrials} trials)`, canvas.width / 2, 30);
 }
 
 // Initial draw
 draw();
+
