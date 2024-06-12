@@ -11,14 +11,14 @@ let cursor = { x: 0, y: 0 };
 let currentTargetIndex = 0;
 let currentTarget = { x: TargetX[currentTargetIndex], y: TargetY[currentTargetIndex] };
 let clickCount = 0;
-const maxClicks = 20;
 let trialCount = 0;
-const maxTrials = 10;
+const maxTrials = 30; // Total trials: 10 no rotation, 10 with 30 degree rotation, 10 no rotation
 let cursorPaths = []; // Array to store cursor paths
 let cursorPath = []; // Array to store current cursor path
 let tracking = false;
 let showUpperTarget = false;
 let cursorVisible = false;
+let baseCursor = { x: 0, y: 0 }; // To store the base cursor position
 
 canvas.addEventListener('mousemove', moveCursor);
 canvas.addEventListener('click', handleClick);
@@ -40,13 +40,10 @@ function moveCursor(event) {
     const hx = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
     const hy = ((event.clientY - rect.top) / canvas.height) * -2 + 1;
 
-    // Rotate the cursor position
-    const rotatedCursor = rotatePoint(hx, hy, rotationAngle);
-
-    cursor = { x: rotatedCursor.x, y: rotatedCursor.y };
+    cursor = { x: hx, y: hy };
 
     if (tracking) {
-        cursorPath.push({ x: rotatedCursor.x, y: rotatedCursor.y }); // Store cursor position
+        cursorPath.push({ x: hx, y: hy }); // Store cursor position
     }
 
     draw();
@@ -58,8 +55,12 @@ function handleClick(event) {
         const hx = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
         const hy = ((event.clientY - rect.top) / canvas.height) * -2 + 1;
 
-        // Rotate the click position
-        const rotatedClick = rotatePoint(hx, hy, rotationAngle);
+        let rotatedClick = { x: hx, y: hy };
+        if (trialCount >= 10 && trialCount < 20) {
+            rotatedClick = rotatePoint(hx - baseCursor.x, hy - baseCursor.y, rotationAngle);
+            rotatedClick.x += baseCursor.x;
+            rotatedClick.y += baseCursor.y;
+        }
 
         // Check if the click is within the current target
         const distance = Math.sqrt((rotatedClick.x - currentTarget.x) ** 2 + (rotatedClick.y - currentTarget.y) ** 2);
@@ -78,6 +79,9 @@ function handleClick(event) {
             // Increment trial count
             if (clickCount % 2 === 0) {
                 trialCount++;
+                if (trialCount === 10 || trialCount === 20) {
+                    baseCursor = { ...cursor }; // Update base cursor position
+                }
             }
         }
 
@@ -149,8 +153,14 @@ function draw() {
 
     // Draw cursor if visible
     if (cursorVisible) {
+        let rotatedCursor = cursor;
+        if (trialCount >= 10 && trialCount < 20) {
+            rotatedCursor = rotatePoint(cursor.x - baseCursor.x, cursor.y - baseCursor.y, rotationAngle);
+            rotatedCursor.x += baseCursor.x;
+            rotatedCursor.y += baseCursor.y;
+        }
         ctx.beginPath();
-        ctx.arc(cursor.x, cursor.y, CursorSize / canvas.width, 0, 2 * Math.PI);
+        ctx.arc(rotatedCursor.x, rotatedCursor.y, CursorSize / canvas.width, 0, 2 * Math.PI);
         ctx.fillStyle = 'blue';
         ctx.fill();
     }
