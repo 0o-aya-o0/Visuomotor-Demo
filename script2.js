@@ -3,7 +3,8 @@ const ctx = canvas.getContext('2d');
 
 const TargetX = [0, 0]; // Target X positions
 const TargetY = [0, 0.8]; // Target Y positions
-const TargetRadius = 0.05; // Target radius as a fraction of the canvas size
+const TargetRadius = 0.05; // Visual target radius
+const LogicalTargetRadius = 0.2; // Logical target radius for click detection
 const CursorSize = 10;
 const rotationAngle = -30 * (Math.PI / 180); // 30 degrees counterclockwise in radians
 
@@ -63,9 +64,9 @@ function handleClick(event) {
             adjustedClick.y += baseCursor.y;
         }
 
-        // Check if the click is within the current target
+        // Check if the click is within the logical target radius
         const distance = Math.sqrt((adjustedClick.x - currentTarget.x) ** 2 + (adjustedClick.y - currentTarget.y) ** 2);
-        if (distance < TargetRadius) {
+        if (distance < LogicalTargetRadius) { // Use logical radius for detection
             clickCount++;
             currentTargetIndex = (currentTargetIndex + 1) % TargetX.length;
             currentTarget = { x: TargetX[currentTargetIndex], y: TargetY[currentTargetIndex] };
@@ -237,4 +238,3 @@ function drawFinalCursorAndTitle() {
 
 // Initial draw
 draw();
-
