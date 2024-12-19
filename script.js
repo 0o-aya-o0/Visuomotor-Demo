@@ -22,6 +22,19 @@ let cursorVisible = false;
 let baseCursor = { x: 0, y: 0 }; // To store the base cursor position for rotation trials
 let pathsDrawn = false; // To check if paths are drawn
 
+function adjustScale() {
+    const scale = 0.8; // スケール率
+    document.body.style.transform = `scale(${scale})`;
+    document.body.style.transformOrigin = 'top left';
+    document.body.style.width = `${100 / scale}%`; // 横幅を調整
+    document.body.style.height = `${100 / scale}%`; // 縦幅を調整
+    document.body.style.overflow = 'hidden'; // はみ出しを防止
+
+    // 上に余白を追加
+    document.body.style.marginTop = '50px';
+}
+
+
 canvas.addEventListener('mousemove', moveCursor);
 canvas.addEventListener('click', handleClick);
 
