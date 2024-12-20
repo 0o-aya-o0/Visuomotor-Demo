@@ -21,6 +21,7 @@ let showGoalTarget = false;
 let cursorVisible = false;
 let baseCursor = { x: 0, y: 0 }; // To store the base cursor position for rotation trials
 let pathsDrawn = false; // To check if paths are drawn
+let graphRendered = false; // Flag to ensure graph is only rendered once
 
 canvas.addEventListener('mousemove', moveCursor);
 canvas.addEventListener('click', handleClick);
@@ -95,9 +96,9 @@ function handleClick(event) {
 
     if (trialCount >= maxTrials && !pathsDrawn) {
         pathsDrawn = true;
+        drawGraph();
     }
 
-    plotGraph(); // Update graph after every click
     draw();
 }
 
@@ -191,120 +192,68 @@ function drawPaths() {
     ctx.restore();
 }
 
-function plotGraph() {
-    console.log('デバッグ: グラフ更新中...');
+function drawGraph() {
+    if (graphRendered) return;
 
-    const trialNumbers = cursorPaths.length > 0 ? cursorPaths.map((_, index) => index + 1) : [0];
-    const maxDisplacements = cursorPaths.length > 0
-        ? cursorPaths.map(entry => {
-            const xDisplacements = entry.path.map(point => Math.abs(point.x - TargetX[entry.trial % TargetX.length]));
-            return Math.max(...xDisplacements) * 100;
-        })
-        : [0]; // 初期状態でゼロ値を表示
+    console.log('Drawing Graph');
 
-    console.log('Trial Numbers:', trialNumbers);
-    console.log('Max Displacements:', maxDisplacements);
+    const trialNumbers = Array.from({ length: 30 }, (_, i) => i + 1);
+    const maxDisplacements = cursorPaths.map((entry) => {
+        const xDisplacements = entry.path.map(
+            (point) => Math.abs(point.x - TargetX[entry.trial % TargetX.length])
+        );
+        return Math.max(...xDisplacements) * 100;
+    });
 
     const graphCanvas = document.getElementById('graph');
+    graphCanvas.style.display = 'block';
+
     new Chart(graphCanvas, {
         type: 'line',
         data: {
             labels: trialNumbers,
             datasets: [
-                {
-                    label: 'Maximum X Displacement (cm)',
-                    data: maxDisplacements,
-                    borderColor: 'red',
-                    backgroundColor: 'rgba(255, 0, 0, 0.1)',
-                    borderWidth: 2,
-                },
-            ],
-        },
-        options: {
-            responsive: false,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Trial Number',
-                    },
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Horizontal displacement (cm)',
-                    },
-                    min: -100,
-                    max: 100,
-                },
-            },
-        },
-    });
-
-    console.log('デバッグ: グラフ描画完了');
-}
-
-function initializeGraph() {
-    console.log('デバッグテスト: 初期グラフを設定します');
-
-    const graphCanvas = document.getElementById('graph');
-    graphCanvas.width = 600; // 横幅を400pxに設定
-    graphCanvas.height = 600; // 高さを400pxに設定
-
-    // 仮データ
-    const trialNumbers = Array.from({ length: 30 }, (_, i) => i + 1); // 1〜30の試行番号
-    const maxDisplacements = [
-        ...Array(10).fill(20),  // trial no. 1~10
-        ...Array(10).fill(50),  // trial no. 11~20
-        ...Array(10).fill(-30), // trial no. 21~30
-    ]; // 仮データを設定
-
-    // デバッグ用ログ
-    console.log('maxDisplacements:', maxDisplacements);
-
-    window.chart = new Chart(graphCanvas, {
-        type: 'line',
-        data: {
-            labels: trialNumbers,
-            datasets: [
-                // データセット1: trial no.1~10 (黒丸、線なし)
+                // Trial 1~10 (黒丸、線なし)
                 {
                     label: '',
-                    data: maxDisplacements.map((value, index) => (index < 10 ? value : null)), // index < 10
-                    borderColor: 'transparent', // 線を非表示にするために透明色を設定
+                    data: maxDisplacements.map((value, index) => (index < 10 ? value : null)),
+                    borderColor: 'transparent',
                     backgroundColor: 'black',
-                    borderWidth: 0, // 線の幅をゼロ
+                    borderWidth: 0,
                     pointBorderColor: 'black',
                     pointBackgroundColor: 'black',
                     pointRadius: 5,
-                    showLine: false, // 線を非表示
+                    showLine: false,
                 },
-                // データセット2: trial no.11~20 (白丸・黒縁、赤点線)
+                // Trial 11~20 (白丸、赤点線)
                 {
                     label: '',
-                    data: maxDisplacements.map((value, index) => (index >= 10 && index < 20 ? value : null)), // 10 <= index < 20
+                    data: maxDisplacements.map((value, index) =>
+                        index >= 10 && index < 20 ? value : null
+                    ),
                     borderColor: 'red',
                     backgroundColor: 'white',
                     borderWidth: 2,
                     pointBorderColor: 'black',
                     pointBackgroundColor: 'white',
                     pointRadius: 5,
-                    showLine: true, // 線を表示
-                    borderDash: [2, 2], // 点線
+                    showLine: true,
+                    borderDash: [5, 5],
                 },
-                // データセット3: trial no.21~30 (グレーの丸、赤点線)
+                // Trial 21~30 (グレー丸、赤点線)
                 {
                     label: '',
-                    data: maxDisplacements.map((value, index) => (index >= 20 ? value : null)), // index >= 20
+                    data: maxDisplacements.map((value, index) =>
+                        index >= 20 ? value : null
+                    ),
                     borderColor: 'red',
                     backgroundColor: 'gray',
                     borderWidth: 2,
                     pointBorderColor: 'gray',
                     pointBackgroundColor: 'gray',
                     pointRadius: 5,
-                    showLine: true, // 線を表示
-                    borderDash: [2, 2], // 点線
+                    showLine: true,
+                    borderDash: [5, 5],
                 },
             ],
         },
@@ -315,14 +264,14 @@ function initializeGraph() {
                 x: {
                     title: {
                         display: true,
-                        text: 'Time ->', // X軸のタイトル
+                        text: 'Time ->',
                     },
                     ticks: {
-                        callback: function (value, index, ticks) {
-                            if (value === 5) return 'Before'; // 試行番号 1-10の範囲を代表
-                            if (value === 15) return 'Prisms'; // 試行番号 11-20の範囲を代表
-                            if (value === 25) return 'After'; // 試行番号 21-30の範囲を代表
-                            return ''; // 他の値は非表示
+                        callback: function (value) {
+                            if (value === 5) return 'Before';
+                            if (value === 15) return 'Prisms';
+                            if (value === 25) return 'After';
+                            return '';
                         },
                         autoSkip: false,
                         maxRotation: 0,
@@ -331,12 +280,12 @@ function initializeGraph() {
                 y: {
                     title: {
                         display: true,
-                        text: 'Horizontal displacement (cm)', // Y軸のタイトル
+                        text: 'Horizontal displacement (cm)',
                     },
                     ticks: {
                         callback: function (value) {
-                            if ([-100, -50, 0, 50, 100].includes(value)) return value; // 特定の目盛りだけ表示
-                            return ''; // 他の値は非表示
+                            if ([-100, -50, 0, 50, 100].includes(value)) return value;
+                            return '';
                         },
                         stepSize: 50,
                     },
@@ -346,115 +295,49 @@ function initializeGraph() {
             },
             plugins: {
                 legend: {
-                    display: false, // 凡例を非表示
+                    display: false,
                 },
-                customDashedLine: {
-                    id: 'customDashedLine',
+                customLabels: {
+                    id: 'customLabels',
                     beforeDraw: (chart) => {
                         const { ctx, scales } = chart;
-            
-                        if (!scales.x || !scales.y) {
-                            console.error('xAxis または yAxis が未定義です');
-                            return;
-                        }
-            
+
+                        if (!scales.x || !scales.y) return;
+
                         const xAxis = scales.x;
                         const yAxis = scales.y;
-            
-                        // X軸の10.5と20.5の位置に対応する座標を計算
-                        const x105 = xAxis.getPixelForValue(10.5); // 試行番号10.5の位置を取得
-                        const x205 = xAxis.getPixelForValue(20.5); // 試行番号20.5の位置を取得
-                        const yStart = yAxis.top; // Y軸の上端
-                        const yEnd = yAxis.bottom; // Y軸の下端
 
-                        console.log('x105:', x105, 'x205:', x205, 'yStart:', yStart, 'yEnd:', yEnd);
-            
+                        // Left Label
+                        const leftLabelX = xAxis.left - 20;
+                        const leftLabelY = (yAxis.bottom + yAxis.top) / 2 + 70;
                         ctx.save();
-                        ctx.setLineDash([5, 5]); // 点線を設定
-                        ctx.strokeStyle = 'gray'; // 点線の色を指定
-                        ctx.lineWidth = 1; // 点線の幅を指定
-            
-                        // 点線の描画 (X=10.5)
-                        ctx.beginPath();
-                        ctx.moveTo(x105, yStart);
-                        ctx.lineTo(x105, yEnd);
-                        ctx.stroke();
-            
-                        // 点線の描画 (X=20.5)
-                        ctx.beginPath();
-                        ctx.moveTo(x205, yStart);
-                        ctx.lineTo(x205, yEnd);
-                        ctx.stroke();
-            
+                        ctx.font = '12px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = 'black';
+                        ctx.translate(leftLabelX, leftLabelY);
+                        ctx.rotate(-Math.PI / 2);
+                        ctx.fillText('Left', 0, 0);
+                        ctx.restore();
+
+                        // Right Label
+                        const rightLabelX = xAxis.left - 20;
+                        const rightLabelY = (yAxis.bottom + yAxis.top) / 2 - 70;
+                        ctx.save();
+                        ctx.font = '12px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = 'black';
+                        ctx.translate(rightLabelX, rightLabelY);
+                        ctx.rotate(-Math.PI / 2);
+                        ctx.fillText('Right', 0, 0);
                         ctx.restore();
                     },
                 },
             },
         },
     });
-    
 
-    console.log('初期グラフが設定されました');
-
+    graphRendered = true;
 }
 
 
-// 初期化時にグラフを表示
-initializeGraph();
-
-// handleClick の修正版
-function handleClick(event) {
-    if (trialCount < maxTrials) {
-        const rect = canvas.getBoundingClientRect();
-        const hx = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
-        const hy = ((event.clientY - rect.top) / canvas.height) * -2 + 1;
-
-        let adjustedClick = { x: hx, y: hy };
-        if (trialCount >= 11 && trialCount < 21) { // Apply rotation for trials 11-20
-            adjustedClick = rotatePoint(hx - baseCursor.x, hy - baseCursor.y, rotationAngle);
-            adjustedClick.x += baseCursor.x;
-            adjustedClick.y += baseCursor.y;
-        }
-
-        const distance = Math.sqrt((adjustedClick.x - currentTarget.x) ** 2 + (adjustedClick.y - currentTarget.y) ** 2);
-        if (distance < LogicalTargetRadius) {
-            clickCount++;
-            currentTargetIndex = (currentTargetIndex + 1) % TargetX.length;
-            currentTarget = { x: TargetX[currentTargetIndex], y: TargetY[currentTargetIndex] };
-
-            if (clickCount % 2 === 0) {
-                cursorPaths.push({ path: [...cursorPath], trial: trialCount });
-                cursorPath = [];
-                if (trialCount === 9 || trialCount === 19) {
-                    cursor = { ...cursorPaths[cursorPaths.length - 1].path.slice(-1)[0] };
-                }
-            } else {
-                cursorPath = [];
-            }
-
-            showGoalTarget = !showGoalTarget;
-
-            if (clickCount % 2 === 0) {
-                trialCount++;
-                if (trialCount === 10 || trialCount === 20) {
-                    baseCursor = { ...cursor };
-                }
-            }
-        }
-
-        if (clickCount === 1) {
-            tracking = true;
-        }
-    }
-    if (trialCount >= maxTrials && !pathsDrawn) {
-        pathsDrawn = true;
-    }
-
-    // グラフの更新
-    updateGraph();
-    draw();
-}
-
-// 初期状態で描画
 draw();
-
